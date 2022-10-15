@@ -2,7 +2,7 @@ from brownie import DappToken, TokenFarm, web3 as brownie_web3
 
 from scripts.utils import get_account, get_contract, get_publish_source
 
-KEPT_BALANCE = brownie_web3.toWei(100, "ether")
+KEPT_BALANCE = brownie_web3.toWei(10_000, "ether")
 
 
 def deploy_contracts():
@@ -15,11 +15,11 @@ def deploy_contracts():
     )
     tx = dapp_token.transfer(
         token_farm_contract.address,
+        # 1 M units - 10k units
         dapp_token.totalSupply() - KEPT_BALANCE,
         {"from": account},
     )
     tx.wait(1)
-    # dapp_token, weth_token, dai_token
     weth_token = get_contract("weth_token")
     dai_token = get_contract("dai_token")  # FAU token will act as DAI
     link_token = get_contract("link_token")

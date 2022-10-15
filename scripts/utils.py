@@ -15,8 +15,9 @@ from brownie import (
 )
 
 
-DECIMALS = 8
-STARTING_PRICE = 200_000_000_000  # == 2000e8 == 2,000
+DECIMALS = 18
+DAPP_INITIAL_PRICE = 1000000000000000000  # == 1e18 == 1
+ETH_INITIAL_PRICE = 2000000000000000000000  # == 2000e18 == 2,000
 
 NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS = ["development", "ganache"]
 LOCAL_BLOCKCHAIN_ENVIRONMENTS = NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS + [
@@ -89,6 +90,7 @@ def get_contract(contract_name: str):
         if len(contract_type) <= 0:
             deploy_mocks()
         contract = contract_type[-1]
+
     # Mainnet/Testnet Blockchains
     else:
         contract_address = config["networks"][network.show_active()][contract_name]
@@ -115,9 +117,17 @@ def deploy_mocks():
     link_token = MockLINK.deploy({"from": account})
     print(f"Deploying to...{link_token.address}")
 
-    print("Deploying MockV3Aggregator...", end="")
-    mockv3aggregator = MockV3Aggregator.deploy(18, 200_000_000_000, {"from": account})
-    print(f"Deploying to...{mockv3aggregator.address}")
+    print("Deploying MockV3AggregatorETH...", end="")
+    mockv3aggregator_eth = MockV3Aggregator.deploy(
+        DECIMALS, ETH_INITIAL_PRICE, {"from": account}
+    )
+    print(f"Deploying to...{mockv3aggregator_eth.address}")
+
+    print("Deploying MockV3AggregatorDAPP...", end="")
+    mockv3aggregator_dapp = MockV3Aggregator.deploy(
+        DECIMALS, DAPP_INITIAL_PRICE, {"from": account}
+    )
+    print(f"Deploying to...{mockv3aggregator_dapp.address}")
 
     # print("Deploying Mock VRFCoordinatorV2...", end="")
     # mock_vrf_coordinator = VRFCoordinatorV2Mock.deploy(
