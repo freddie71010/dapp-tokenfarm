@@ -19,7 +19,10 @@ contract TokenFarm is Ownable {
     
     IERC20 public immutable i_dappToken;
     
-    event NewTokenAllowed(address token);
+    event AddedNewAllowedToken(address token);
+    event StakeTokens(address user, address token, uint256 quantity);
+    event UnstakeTokens(address user, address token, uint256 quantity);
+    event IssueRewardTokens(address user, uint256 quantity);
     
     constructor(address _dappTokenAddress) {
         i_dappToken = IERC20(_dappTokenAddress);
@@ -34,6 +37,7 @@ contract TokenFarm is Ownable {
         s_stakingBalancePerUserPerToken[msg.sender][_token] += _amount;
         
         s_stakers.push(msg.sender);
+        emit StakeTokens(msg.sender, _token, _amount);
     }
 
     function unstakeTokens(address _token) public {
@@ -41,6 +45,8 @@ contract TokenFarm is Ownable {
         require(balance > 0, "Staking balance cannot be 0");
         IERC20(_token).transfer(msg.sender, balance);
         s_stakingBalancePerUserPerToken[msg.sender][_token] = 0;
+
+        emit UnstakeTokens(msg.sender, _token, balance);
     }
 
     function tokenIsAllowed(address _token) public view returns (bool) {
@@ -54,7 +60,7 @@ contract TokenFarm is Ownable {
 
     function addAllowedTokens(address _token) public onlyOwner {
         s_allowedTokens.push(_token);
-        emit NewTokenAllowed(_token);
+        emit AddedNewAllowedToken(_token);
     }
 
     function setPriceFeedContract(address _token, address _priceFeed) external onlyOwner {
@@ -65,10 +71,11 @@ contract TokenFarm is Ownable {
         for (uint256 i=0; i < s_stakers.length; i++) {
             address recipient = s_stakers[i];
             // send them token reward based on their TVL
-            uint256 userTVL = getUserTVL(msg.sender);
+            uint256 userTVL = getUserTVL(recipient);
             uint256 rewardAmt = userTVL / 10; // User receives 10% of TVL in reward tokens
             // uint256 rewardAmt = calculateRewardAmt(userTVL);
-            i_dappToken.transfer(msg.sender, rewardAmt);
+            i_dappToken.transfer(recipient, rewardAmt);
+            emit IssueRewardTokens(recipient, rewardAmt);
         }
     }
 
@@ -76,7 +83,7 @@ contract TokenFarm is Ownable {
     //     // perform calculation to determine reward distribution
     // }
 
-    function getUserTVL(address _user) public returns (uint256) {
+    function getUserTVL(address _user) public view returns (uint256) {
         uint256 totalValue = 0;
         for (uint8 token=0; token < s_allowedTokens.length; token++){
             address tokenAddress = s_allowedTokens[token];
